@@ -1,0 +1,1784 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-950 text-slate-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BMW Lumina Quick</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Phosphor Icons CDN for slick studio UI icons -->
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <!-- Google Fonts Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              400: '#818cf8',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+            },
+            surface: {
+              800: '#1e293b',
+              850: '#172033',
+              900: '#0f172a',
+              950: '#090d16',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Custom scrollbars for toolbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #475569;
+    }
+
+    /* Range slider custom styling */
+    input[type=range] {
+      -webkit-appearance: none;
+      height: 5px;
+      border-radius: 9999px;
+      background: #334155;
+      outline: none;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      background: #6366f1;
+      cursor: pointer;
+      box-shadow: 0 0 8px rgba(99, 102, 241, 0.6);
+      transition: transform 0.1s ease, background 0.2s;
+    }
+    input[type=range]::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+      background: #818cf8;
+    }
+
+    /* Checkerboard background for transparent canvas display */
+    .checkerboard {
+      background-color: #111827;
+      background-image: 
+        linear-gradient(45deg, #1f2937 25%, transparent 25%), 
+        linear-gradient(-45deg, #1f2937 25%, transparent 25%), 
+        linear-gradient(45deg, transparent 75%, #1f2937 75%), 
+        linear-gradient(-45deg, transparent 75%, #1f2937 75%);
+      background-size: 16px 16px;
+      background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
+    }
+  </style>
+</head>
+<body class="h-full flex flex-col overflow-hidden select-none bg-surface-950 font-sans antialiased text-slate-200">
+
+  <!-- Top App Navigation Bar -->
+  <header class="h-14 border-b border-slate-800 bg-surface-900/90 backdrop-blur px-4 flex items-center justify-between z-30 shrink-0">
+    <div class="flex items-center gap-3">
+      <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-brand-600 to-indigo-400 flex items-center justify-center shadow-lg shadow-brand-500/20">
+        <i class="ph-bold ph-aperture text-xl text-white"></i>
+      </div>
+      <div>
+        <h1 class="font-bold text-sm sm:text-base text-white tracking-wide flex items-center gap-2">
+          BMW Lumina <span class="text-xs px-2 py-0.5 rounded-full bg-brand-500/20 text-brand-400 font-semibold border border-brand-500/30">Quick</span>
+        </h1>
+      </div>
+    </div>
+
+    <!-- History & View actions -->
+    <div class="flex items-center gap-1 sm:gap-2">
+      <button id="undoBtn" title="Undo (Ctrl+Z)" disabled class="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-30 disabled:hover:bg-transparent disabled:cursor-not-allowed transition">
+        <i class="ph ph-arrow-u-up-left text-lg"></i>
+      </button>
+      <button id="redoBtn" title="Redo (Ctrl+Y)" disabled class="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-30 disabled:hover:bg-transparent disabled:cursor-not-allowed transition">
+        <i class="ph ph-arrow-u-up-right text-lg"></i>
+      </button>
+
+      <div class="h-5 w-px bg-slate-800 mx-1"></div>
+
+      <!-- Zoom Level indicator -->
+      <div class="flex items-center bg-surface-800 border border-slate-700/60 rounded-lg px-2 py-1 gap-1 text-xs">
+        <button id="zoomOutBtn" class="text-slate-400 hover:text-white p-1 rounded"><i class="ph ph-minus"></i></button>
+        <span id="zoomLevelText" class="w-12 text-center font-mono font-medium text-slate-300">100%</span>
+        <button id="zoomInBtn" class="text-slate-400 hover:text-white p-1 rounded"><i class="ph ph-plus"></i></button>
+        <button id="zoomFitBtn" title="Fit to Screen" class="text-slate-400 hover:text-white p-1 rounded ml-1 border-l border-slate-700 pl-1.5"><i class="ph ph-arrows-out"></i></button>
+      </div>
+
+      <div class="h-5 w-px bg-slate-800 mx-1 hidden sm:block"></div>
+
+      <button id="resetAllBtn" class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800 border border-slate-700/60 transition">
+        <i class="ph ph-arrow-counter-clockwise"></i> Reset
+      </button>
+    </div>
+
+    <!-- Import & Export Controls -->
+    <div class="flex items-center gap-2">
+      <label for="imageUploadInput" class="cursor-pointer flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-surface-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">
+        <i class="ph-bold ph-upload-simple"></i>
+        <span class="hidden sm:inline">Open Photo</span>
+        <input type="file" id="imageUploadInput" accept="image/*" class="hidden">
+      </label>
+
+      <!-- Preset Demo image button -->
+      <button id="sampleImageBtn" class="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-700 border border-slate-700/60 transition">
+        <i class="ph ph-image"></i> Sample
+      </button>
+
+      <button id="exportModalOpenBtn" class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-brand-600 hover:bg-brand-500 text-white shadow-md shadow-brand-600/30 transition">
+        <i class="ph-bold ph-download-simple"></i>
+        <span>Export</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Workspace Area -->
+  <div class="flex-1 flex flex-col md:flex-row overflow-hidden relative">
+
+    <!-- Primary Canvas Viewport (Center) -->
+    <main id="viewportContainer" class="flex-1 relative overflow-hidden flex items-center justify-center bg-surface-950 p-4 checkerboard">
+      
+      <!-- Interactive workspace canvas container -->
+      <div id="canvasWrapper" class="relative shadow-2xl transition-all duration-75 select-none ring-1 ring-slate-800/80">
+        <!-- Render Canvas -->
+        <canvas id="mainCanvas" class="block max-w-none rounded shadow-lg"></canvas>
+
+        <!-- Crop Overlay Box (conditionally active) -->
+        <div id="cropOverlay" class="absolute inset-0 pointer-events-none hidden">
+          <!-- Darkened surrounding backdrop handled in JS or semi-transparent border box -->
+          <div id="cropBox" class="absolute pointer-events-auto border-2 border-indigo-400 bg-transparent shadow-[0_0_0_9999px_rgba(0,0,0,0.65)] cursor-move">
+            <!-- Rule of Thirds grid lines -->
+            <div class="absolute inset-0 grid grid-cols-3 grid-rows-3 pointer-events-none">
+              <div class="border-r border-b border-white/30"></div>
+              <div class="border-r border-b border-white/30"></div>
+              <div class="border-b border-white/30"></div>
+              <div class="border-r border-b border-white/30"></div>
+              <div class="border-r border-b border-white/30"></div>
+              <div class="border-b border-white/30"></div>
+              <div class="border-r border-white/30"></div>
+              <div class="border-r border-white/30"></div>
+              <div></div>
+            </div>
+
+            <!-- Resize Handles (8 directions) -->
+            <div data-handle="tl" class="crop-handle absolute -top-2 -left-2 w-4 h-4 bg-white border-2 border-indigo-500 rounded-sm cursor-nwse-resize shadow"></div>
+            <div data-handle="tm" class="crop-handle absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-white border-2 border-indigo-500 rounded-sm cursor-ns-resize shadow"></div>
+            <div data-handle="tr" class="crop-handle absolute -top-2 -right-2 w-4 h-4 bg-white border-2 border-indigo-500 rounded-sm cursor-nesw-resize shadow"></div>
+            <div data-handle="mr" class="crop-handle absolute top-1/2 -right-2 -translate-y-1/2 w-4 h-4 bg-white border-2 border-indigo-500 rounded-sm cursor-ew-resize shadow"></div>
+            <div data-handle="br" class="crop-handle absolute -bottom-2 -right-2 w-4 h-4 bg-white border-2 border-indigo-500 rounded-sm cursor-nwse-resize shadow"></div>
+            <div data-handle="bm" class="crop-handle absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-white border-2 border-indigo-500 rounded-sm cursor-ns-resize shadow"></div>
+            <div data-handle="bl" class="crop-handle absolute -bottom-2 -left-2 w-4 h-4 bg-white border-2 border-indigo-500 rounded-sm cursor-nesw-resize shadow"></div>
+            <div data-handle="ml" class="crop-handle absolute top-1/2 -left-2 -translate-y-1/2 w-4 h-4 bg-white border-2 border-indigo-500 rounded-sm cursor-ew-resize shadow"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Canvas Overlay Controls (bottom center) -->
+      <div class="absolute bottom-4 left-1/2 -translate-x-1/2 bg-surface-900/90 backdrop-blur border border-slate-800 px-3 py-1.5 rounded-full flex items-center gap-3 text-xs shadow-xl z-10">
+        <span id="imageDimensionsBadge" class="text-slate-400 font-mono">0 × 0 px</span>
+        <span class="text-slate-700">|</span>
+        <button id="compareBtn" class="flex items-center gap-1.5 text-slate-300 hover:text-white transition" title="Press & hold to see original image">
+          <i class="ph ph-eye"></i> Hold to Compare
+        </button>
+      </div>
+
+      <!-- Empty state prompt if needed -->
+      <div id="emptyDropState" class="absolute inset-0 flex flex-col items-center justify-center p-6 text-center pointer-events-none hidden">
+        <div class="w-16 h-16 rounded-2xl bg-surface-850 border border-slate-700 flex items-center justify-center text-brand-400 text-3xl mb-4 shadow-xl">
+          <i class="ph ph-image"></i>
+        </div>
+        <h3 class="text-base font-semibold text-white mb-1">Drag and drop any photo here</h3>
+        <p class="text-xs text-slate-400 max-w-xs">Supports JPG, PNG, WEBP and modern image formats</p>
+      </div>
+    </main>
+
+    <!-- Right Sidebar Studio Controls -->
+    <aside class="w-full md:w-80 lg:w-96 bg-surface-900 border-t md:border-t-0 md:border-l border-slate-800 flex flex-col z-20 shrink-0 h-[48vh] md:h-auto">
+      
+      <!-- Studio Tabs (Color Adjust, Crop & Transform, Scale / Dimensions) -->
+      <div class="flex border-b border-slate-800 bg-surface-850 px-2 pt-2 gap-1 text-xs shrink-0 overflow-x-auto">
+        <button data-tab="adjust" class="tab-btn active-tab flex-1 py-2.5 px-2 rounded-t-lg font-medium flex items-center justify-center gap-2 border-b-2 border-brand-500 text-white bg-surface-900 transition">
+          <i class="ph-bold ph-sliders"></i>
+          <span>Adjust</span>
+        </button>
+        <button data-tab="crop" class="tab-btn flex-1 py-2.5 px-2 rounded-t-lg font-medium flex items-center justify-center gap-2 border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition">
+          <i class="ph-bold ph-crop"></i>
+          <span>Crop</span>
+        </button>
+        <button data-tab="scale" class="tab-btn flex-1 py-2.5 px-2 rounded-t-lg font-medium flex items-center justify-center gap-2 border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition">
+          <i class="ph-bold ph-arrows-out-cardinal"></i>
+          <span>Scale</span>
+        </button>
+        <button data-tab="filters" class="tab-btn flex-1 py-2.5 px-2 rounded-t-lg font-medium flex items-center justify-center gap-2 border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition">
+          <i class="ph-bold ph-sparkle"></i>
+          <span>Presets</span>
+        </button>
+      </div>
+
+      <!-- Tab Content Panels Container -->
+      <div class="flex-1 overflow-y-auto p-4 space-y-5 text-xs">
+
+        <!-- TAB 1: COLOR ADJUSTMENTS -->
+        <section id="panel-adjust" class="tab-panel space-y-4">
+          
+          <!-- Basic Tone Controls -->
+          <div class="bg-surface-850 p-3.5 rounded-xl border border-slate-800/80 space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="font-semibold text-slate-200 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                <i class="ph-bold ph-sun text-amber-400"></i> Light & Tone
+              </span>
+              <button id="resetToneBtn" class="text-[10px] text-slate-400 hover:text-brand-400 transition">Reset</button>
+            </div>
+
+            <!-- Brightness -->
+            <div class="space-y-1.5">
+              <div class="flex justify-between text-slate-300">
+                <span>Brightness</span>
+                <span id="val-brightness" class="font-mono text-slate-400">100%</span>
+              </div>
+              <input type="range" id="slider-brightness" min="0" max="200" value="100" class="w-full">
+            </div>
+
+            <!-- Contrast -->
+            <div class="space-y-1.5">
+              <div class="flex justify-between text-slate-300">
+                <span>Contrast</span>
+                <span id="val-contrast" class="font-mono text-slate-400">100%</span>
+              </div>
+              <input type="range" id="slider-contrast" min="0" max="200" value="100" class="w-full">
+            </div>
+
+            <!-- Exposure -->
+            <div class="space-y-1.5">
+              <div class="flex justify-between text-slate-300">
+                <span>Exposure</span>
+                <span id="val-exposure" class="font-mono text-slate-400">0</span>
+              </div>
+              <input type="range" id="slider-exposure" min="-100" max="100" value="0" class="w-full">
+            </div>
+          </div>
+
+          <!-- Color & Saturation -->
+          <div class="bg-surface-850 p-3.5 rounded-xl border border-slate-800/80 space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="font-semibold text-slate-200 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                <i class="ph-bold ph-palette text-indigo-400"></i> Color & Balance
+              </span>
+              <button id="resetColorBtn" class="text-[10px] text-slate-400 hover:text-brand-400 transition">Reset</button>
+            </div>
+
+            <!-- Saturation -->
+            <div class="space-y-1.5">
+              <div class="flex justify-between text-slate-300">
+                <span>Saturation</span>
+                <span id="val-saturation" class="font-mono text-slate-400">100%</span>
+              </div>
+              <input type="range" id="slider-saturation" min="0" max="250" value="100" class="w-full">
+            </div>
+
+            <!-- Temperature / Warmth -->
+            <div class="space-y-1.5">
+              <div class="flex justify-between text-slate-300">
+                <span>Warmth (Temperature)</span>
+                <span id="val-warmth" class="font-mono text-slate-400">0</span>
+              </div>
+              <input type="range" id="slider-warmth" min="-100" max="100" value="0" class="w-full">
+            </div>
+
+            <!-- Hue Rotate -->
+            <div class="space-y-1.5">
+              <div class="flex justify-between text-slate-300">
+                <span>Hue Shift</span>
+                <span id="val-hue" class="font-mono text-slate-400">0°</span>
+              </div>
+              <input type="range" id="slider-hue" min="-180" max="180" value="0" class="w-full">
+            </div>
+          </div>
+
+          <!-- Creative & Styling -->
+          <div class="bg-surface-850 p-3.5 rounded-xl border border-slate-800/80 space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="font-semibold text-slate-200 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                <i class="ph-bold ph-magic-wand text-pink-400"></i> Stylize
+              </span>
+              <button id="resetStyleBtn" class="text-[10px] text-slate-400 hover:text-brand-400 transition">Reset</button>
+            </div>
+
+            <!-- Sepia -->
+            <div class="space-y-1.5">
+              <div class="flex justify-between text-slate-300">
+                <span>Sepia</span>
+                <span id="val-sepia" class="font-mono text-slate-400">0%</span>
+              </div>
+              <input type="range" id="slider-sepia" min="0" max="100" value="0" class="w-full">
+            </div>
+
+            <!-- Grayscale -->
+            <div class="space-y-1.5">
+              <div class="flex justify-between text-slate-300">
+                <span>Grayscale</span>
+                <span id="val-grayscale" class="font-mono text-slate-400">0%</span>
+              </div>
+              <input type="range" id="slider-grayscale" min="0" max="100" value="0" class="w-full">
+            </div>
+
+            <!-- Blur -->
+            <div class="space-y-1.5">
+              <div class="flex justify-between text-slate-300">
+                <span>Soft Blur</span>
+                <span id="val-blur" class="font-mono text-slate-400">0 px</span>
+              </div>
+              <input type="range" id="slider-blur" min="0" max="20" value="0" step="0.5" class="w-full">
+            </div>
+
+            <!-- Invert -->
+            <div class="space-y-1.5">
+              <div class="flex justify-between text-slate-300">
+                <span>Invert</span>
+                <span id="val-invert" class="font-mono text-slate-400">0%</span>
+              </div>
+              <input type="range" id="slider-invert" min="0" max="100" value="0" class="w-full">
+            </div>
+          </div>
+        </section>
+
+        <!-- TAB 2: CROP & TRANSFORM -->
+        <section id="panel-crop" class="tab-panel hidden space-y-4">
+          <div class="bg-surface-850 p-3.5 rounded-xl border border-slate-800/80 space-y-3">
+            <span class="font-semibold text-slate-200 uppercase tracking-wider text-[11px] block">Interactive Crop Tool</span>
+            <p class="text-slate-400 text-[11px]">Select an aspect ratio preset or adjust the handles directly on the canvas.</p>
+            
+            <!-- Crop Mode Toggle Buttons -->
+            <div class="grid grid-cols-2 gap-2 pt-1">
+              <button id="activateCropBtn" class="flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg bg-brand-600 hover:bg-brand-500 font-medium text-white transition">
+                <i class="ph-bold ph-crop"></i> Start Cropping
+              </button>
+              <button id="applyCropBtn" disabled class="flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 font-medium text-white disabled:opacity-40 disabled:cursor-not-allowed transition">
+                <i class="ph-bold ph-check"></i> Apply Crop
+              </button>
+            </div>
+            <button id="cancelCropBtn" class="w-full py-1.5 rounded-lg border border-slate-700 text-slate-300 hover:text-white hover:bg-slate-800 hidden transition">
+              Cancel Crop
+            </button>
+          </div>
+
+          <!-- Aspect Ratio Presets -->
+          <div class="bg-surface-850 p-3.5 rounded-xl border border-slate-800/80 space-y-3">
+            <span class="font-semibold text-slate-200 uppercase tracking-wider text-[11px] block">Aspect Ratio</span>
+            <div class="grid grid-cols-3 gap-2">
+              <button data-ratio="free" class="crop-ratio-btn active-ratio py-2 rounded-lg bg-surface-800 hover:bg-slate-700 text-slate-200 border border-brand-500/80 text-center font-medium">Freeform</button>
+              <button data-ratio="1:1" class="crop-ratio-btn py-2 rounded-lg bg-surface-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-center font-medium">1:1 Square</button>
+              <button data-ratio="4:3" class="crop-ratio-btn py-2 rounded-lg bg-surface-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-center font-medium">4:3 Standard</button>
+              <button data-ratio="16:9" class="crop-ratio-btn py-2 rounded-lg bg-surface-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-center font-medium">16:9 Widescreen</button>
+              <button data-ratio="9:16" class="crop-ratio-btn py-2 rounded-lg bg-surface-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-center font-medium">9:16 Story</button>
+              <button data-ratio="3:2" class="crop-ratio-btn py-2 rounded-lg bg-surface-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-center font-medium">3:2 Classic</button>
+            </div>
+          </div>
+
+          <!-- Transform & Orientation -->
+          <div class="bg-surface-850 p-3.5 rounded-xl border border-slate-800/80 space-y-3">
+            <span class="font-semibold text-slate-200 uppercase tracking-wider text-[11px] block">Rotate & Flip</span>
+            <div class="grid grid-cols-4 gap-2">
+              <button id="rotateCCWBtn" class="flex flex-col items-center justify-center p-2.5 rounded-lg bg-surface-800 hover:bg-slate-700 text-slate-200 border border-slate-700/80 transition" title="Rotate 90° Left">
+                <i class="ph-bold ph-arrow-counter-clockwise text-base mb-1"></i>
+                <span class="text-[10px]">-90°</span>
+              </button>
+              <button id="rotateCWBtn" class="flex flex-col items-center justify-center p-2.5 rounded-lg bg-surface-800 hover:bg-slate-700 text-slate-200 border border-slate-700/80 transition" title="Rotate 90° Right">
+                <i class="ph-bold ph-arrow-clockwise text-base mb-1"></i>
+                <span class="text-[10px]">+90°</span>
+              </button>
+              <button id="flipHBtn" class="flex flex-col items-center justify-center p-2.5 rounded-lg bg-surface-800 hover:bg-slate-700 text-slate-200 border border-slate-700/80 transition" title="Flip Horizontal">
+                <i class="ph-bold ph-arrows-left-right text-base mb-1"></i>
+                <span class="text-[10px]">Flip X</span>
+              </button>
+              <button id="flipVBtn" class="flex flex-col items-center justify-center p-2.5 rounded-lg bg-surface-800 hover:bg-slate-700 text-slate-200 border border-slate-700/80 transition" title="Flip Vertical">
+                <i class="ph-bold ph-arrows-down-up text-base mb-1"></i>
+                <span class="text-[10px]">Flip Y</span>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- TAB 3: SCALE & RESIZE -->
+        <section id="panel-scale" class="tab-panel hidden space-y-4">
+          <div class="bg-surface-850 p-3.5 rounded-xl border border-slate-800/80 space-y-3">
+            <span class="font-semibold text-slate-200 uppercase tracking-wider text-[11px] block">Scale Dimensions</span>
+            <p class="text-slate-400 text-[11px]">Resize the canvas pixel dimensions with sharp bicubic resampling.</p>
+
+            <!-- Current Resolution -->
+            <div class="bg-surface-900 p-2.5 rounded-lg border border-slate-800 flex justify-between items-center text-xs">
+              <span class="text-slate-400">Current Canvas:</span>
+              <span id="currentDimText" class="font-mono text-brand-400 font-semibold">1200 × 800 px</span>
+            </div>
+
+            <!-- Custom Width & Height Inputs -->
+            <div class="grid grid-cols-2 gap-3 pt-1">
+              <div class="space-y-1">
+                <label class="text-[11px] text-slate-400">Width (px)</label>
+                <input type="number" id="scaleWidthInput" min="10" max="8000" class="w-full bg-surface-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white font-mono focus:border-brand-500 focus:outline-none">
+              </div>
+              <div class="space-y-1">
+                <label class="text-[11px] text-slate-400">Height (px)</label>
+                <input type="number" id="scaleHeightInput" min="10" max="8000" class="w-full bg-surface-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white font-mono focus:border-brand-500 focus:outline-none">
+              </div>
+            </div>
+
+            <!-- Maintain Aspect Ratio Checkbox -->
+            <label class="flex items-center gap-2 cursor-pointer pt-1 text-slate-300">
+              <input type="checkbox" id="keepAspectCheckbox" checked class="w-4 h-4 rounded text-brand-500 focus:ring-brand-500 bg-surface-900 border-slate-700">
+              <span class="text-xs">Lock aspect ratio</span>
+            </label>
+
+            <!-- Quick Scale Percentage Buttons -->
+            <div class="pt-2">
+              <label class="text-[11px] text-slate-400 block mb-2">Preset Scaling:</label>
+              <div class="grid grid-cols-4 gap-1.5">
+                <button data-scale="0.25" class="quick-scale-btn py-1.5 rounded-md bg-surface-800 hover:bg-slate-700 text-slate-300 border border-slate-700/80 text-center font-mono">25%</button>
+                <button data-scale="0.50" class="quick-scale-btn py-1.5 rounded-md bg-surface-800 hover:bg-slate-700 text-slate-300 border border-slate-700/80 text-center font-mono">50%</button>
+                <button data-scale="0.75" class="quick-scale-btn py-1.5 rounded-md bg-surface-800 hover:bg-slate-700 text-slate-300 border border-slate-700/80 text-center font-mono">75%</button>
+                <button data-scale="2.00" class="quick-scale-btn py-1.5 rounded-md bg-surface-800 hover:bg-slate-700 text-slate-300 border border-slate-700/80 text-center font-mono">200%</button>
+              </div>
+            </div>
+
+            <button id="applyResizeBtn" class="w-full mt-3 py-2 rounded-lg bg-brand-600 hover:bg-brand-500 font-semibold text-white shadow-md shadow-brand-600/30 transition flex items-center justify-center gap-1.5">
+              <i class="ph-bold ph-arrows-in-cardinal"></i> Apply New Dimensions
+            </button>
+          </div>
+        </section>
+
+        <!-- TAB 4: PRESETS -->
+        <section id="panel-filters" class="tab-panel hidden space-y-4">
+          <div class="bg-surface-850 p-3.5 rounded-xl border border-slate-800/80 space-y-3">
+            <span class="font-semibold text-slate-200 uppercase tracking-wider text-[11px] block">Aesthetic Filters</span>
+            <p class="text-slate-400 text-[11px]">Instant single-tap color grading presets.</p>
+            
+            <div class="grid grid-cols-2 gap-2.5 pt-1">
+              <button data-filter="normal" class="filter-preset-btn p-2.5 rounded-lg bg-surface-800 hover:bg-slate-700 border border-brand-500 text-left transition">
+                <span class="font-semibold text-slate-200 block text-xs">Original</span>
+                <span class="text-[10px] text-slate-400">Natural image state</span>
+              </button>
+              <button data-filter="vivid" class="filter-preset-btn p-2.5 rounded-lg bg-surface-800 hover:bg-slate-700 border border-slate-700 text-left transition">
+                <span class="font-semibold text-amber-300 block text-xs">Vivid Punch</span>
+                <span class="text-[10px] text-slate-400">Boosted vibrance</span>
+              </button>
+              <button data-filter="warm-glow" class="filter-preset-btn p-2.5 rounded-lg bg-surface-800 hover:bg-slate-700 border border-slate-700 text-left transition">
+                <span class="font-semibold text-orange-300 block text-xs">Golden Hour</span>
+                <span class="text-[10px] text-slate-400">Warm sunset tones</span>
+              </button>
+              <button data-filter="cool-dusk" class="filter-preset-btn p-2.5 rounded-lg bg-surface-800 hover:bg-slate-700 border border-slate-700 text-left transition">
+                <span class="font-semibold text-cyan-300 block text-xs">Cool Dusk</span>
+                <span class="text-[10px] text-slate-400">Moody cyan shadows</span>
+              </button>
+              <button data-filter="vintage" class="filter-preset-btn p-2.5 rounded-lg bg-surface-800 hover:bg-slate-700 border border-slate-700 text-left transition">
+                <span class="font-semibold text-amber-200 block text-xs">Vintage 1970</span>
+                <span class="text-[10px] text-slate-400">Warm sepia matte</span>
+              </button>
+              <button data-filter="noir" class="filter-preset-btn p-2.5 rounded-lg bg-surface-800 hover:bg-slate-700 border border-slate-700 text-left transition">
+                <span class="font-semibold text-slate-300 block text-xs">Noir Drama</span>
+                <span class="text-[10px] text-slate-400">High contrast B&W</span>
+              </button>
+              <button data-filter="cyber" class="filter-preset-btn p-2.5 rounded-lg bg-surface-800 hover:bg-slate-700 border border-slate-700 text-left transition">
+                <span class="font-semibold text-purple-400 block text-xs">Neon Bloom</span>
+                <span class="text-[10px] text-slate-400">Hyper-saturated tone</span>
+              </button>
+              <button data-filter="faded" class="filter-preset-btn p-2.5 rounded-lg bg-surface-800 hover:bg-slate-700 border border-slate-700 text-left transition">
+                <span class="font-semibold text-emerald-300 block text-xs">Matte Film</span>
+                <span class="text-[10px] text-slate-400">Soft crushed shadows</span>
+              </button>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </aside>
+  </div>
+
+  <!-- Export Modal -->
+  <div id="exportModal" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-surface-900 border border-slate-800 rounded-2xl w-full max-w-md p-6 space-y-5 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <i class="ph-bold ph-download-simple text-brand-400"></i> Export Photo
+        </h3>
+        <button id="closeExportModalBtn" class="text-slate-400 hover:text-white p-1 rounded-lg">
+          <i class="ph-bold ph-x text-lg"></i>
+        </button>
+      </div>
+
+      <div class="space-y-4 text-xs">
+        <!-- Filename Input -->
+        <div class="space-y-1">
+          <label class="block text-slate-300 font-medium">File Name</label>
+          <div class="flex items-center bg-surface-950 border border-slate-700 rounded-lg px-2.5 py-1.5 focus-within:border-brand-500">
+            <input type="text" id="exportFileNameInput" value="bmw-lumina-quick-edit" placeholder="Enter file name" class="bg-transparent text-white font-mono text-xs w-full focus:outline-none">
+            <span id="exportExtLabel" class="text-slate-500 font-mono text-xs select-none">.png</span>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-slate-300 font-medium mb-1.5">File Format</label>
+          <div class="grid grid-cols-3 gap-2">
+            <button data-format="image/png" class="format-btn py-2 rounded-lg bg-brand-600 border border-brand-500 font-medium text-white text-center">PNG (Lossless)</button>
+            <button data-format="image/jpeg" class="format-btn py-2 rounded-lg bg-surface-800 border border-slate-700 font-medium text-slate-300 text-center">JPEG</button>
+            <button data-format="image/webp" class="format-btn py-2 rounded-lg bg-surface-800 border border-slate-700 font-medium text-slate-300 text-center">WEBP</button>
+          </div>
+        </div>
+
+        <div id="qualitySliderContainer" class="space-y-1.5 hidden">
+          <div class="flex justify-between text-slate-300">
+            <span>Compression Quality</span>
+            <span id="exportQualityVal" class="font-mono text-brand-400 font-bold">92%</span>
+          </div>
+          <input type="range" id="exportQualitySlider" min="10" max="100" value="92" class="w-full">
+        </div>
+
+        <!-- Destination Folder Picker Section -->
+        <div class="space-y-1.5">
+          <div class="flex items-center justify-between">
+            <label class="block text-slate-300 font-medium">Save Destination</label>
+            <span id="folderSupportBadge" class="text-[10px] text-emerald-400 flex items-center gap-1 font-medium">
+              <i class="ph-bold ph-check"></i> Folder Picker Supported
+            </span>
+          </div>
+
+          <div class="bg-surface-850 p-3 rounded-xl border border-slate-800 space-y-2.5">
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center gap-2 min-w-0">
+                <div class="w-8 h-8 rounded-lg bg-surface-800 border border-slate-700 flex items-center justify-center text-amber-400 shrink-0">
+                  <i id="destinationIcon" class="ph-bold ph-folder text-base"></i>
+                </div>
+                <div class="min-w-0">
+                  <div class="text-[11px] font-medium text-slate-200 truncate" id="chosenFolderName">Default Downloads Folder</div>
+                  <div class="text-[10px] text-slate-400" id="chosenFolderSubtext">Standard browser save location</div>
+                </div>
+              </div>
+
+              <!-- Pick Folder Action Button -->
+              <button id="pickFolderBtn" class="shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-surface-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-medium transition">
+                <i class="ph-bold ph-folder-open text-brand-400"></i>
+                <span>Choose Folder</span>
+              </button>
+            </div>
+
+            <!-- Optional clear picked folder -->
+            <button id="clearFolderBtn" class="text-[10px] text-slate-400 hover:text-rose-400 hidden flex items-center gap-1 transition">
+              <i class="ph ph-arrow-counter-clockwise"></i> Reset to Default Downloads
+            </button>
+          </div>
+        </div>
+
+        <div class="bg-surface-850 p-3 rounded-lg border border-slate-800 space-y-1">
+          <div class="flex justify-between text-slate-400">
+            <span>Export Size:</span>
+            <span id="exportDimText" class="font-mono text-slate-200">1200 × 800 px</span>
+          </div>
+          <div class="flex justify-between text-slate-400">
+            <span>Estimated Type:</span>
+            <span id="exportMimeText" class="font-mono text-slate-200">PNG</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex gap-2 pt-2">
+        <button id="cancelExportModalBtn" class="flex-1 py-2.5 rounded-lg border border-slate-700 text-slate-300 hover:bg-surface-800 font-medium text-xs transition">
+          Cancel
+        </button>
+        <button id="confirmDownloadBtn" class="flex-1 py-2.5 rounded-lg bg-brand-600 hover:bg-brand-500 text-white font-semibold text-xs shadow-lg shadow-brand-600/30 flex items-center justify-center gap-1.5 transition">
+          <i id="confirmDownloadIcon" class="ph-bold ph-download-simple"></i>
+          <span id="confirmDownloadLabel">Download Image</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="fixed bottom-14 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <script>
+    /**
+     * Photo Studio Application Logic
+     * Handles Canvas state, undo/redo stack, scale, crop, and color adjustments
+     */
+    
+    // Application Global State
+    const state = {
+      baseCanvas: document.createElement('canvas'), // Stores clean pixel data at full current resolution
+      currentDisplayZoom: 1.0,
+      zoomMode: 'fit', // 'fit' or 'manual'
+      
+      // Color & tone adjustments
+      adjustments: {
+        brightness: 100, // 0-200 (100 is normal)
+        contrast: 100,   // 0-200 (100 is normal)
+        exposure: 0,     // -100 to 100
+        saturation: 100, // 0-250 (100 is normal)
+        warmth: 0,       // -100 to 100 (blue to warm orange)
+        hue: 0,          // -180 to 180 deg
+        sepia: 0,        // 0-100%
+        grayscale: 0,    // 0-100%
+        blur: 0,         // 0-20 px
+        invert: 0        // 0-100%
+      },
+
+      // Crop state
+      isCropping: false,
+      cropRatio: 'free', // 'free', '1:1', '4:3', '16:9', '9:16', '3:2'
+      cropBoxRect: { x: 0, y: 0, width: 0, height: 0 },
+      isDraggingCrop: false,
+      activeCropHandle: null,
+      dragStart: { x: 0, y: 0, cropX: 0, cropY: 0, cropW: 0, cropH: 0 },
+
+      // History stack for Undo / Redo
+      history: [],
+      historyIndex: -1,
+      maxHistory: 15,
+
+      // Export settings
+      exportFormat: 'image/png',
+      exportQuality: 0.92,
+      chosenDirectoryHandle: null // Target destination directory if chosen
+    };
+
+    // DOM Elements
+    const viewportContainer = document.getElementById('viewportContainer');
+    const canvasWrapper = document.getElementById('canvasWrapper');
+    const mainCanvas = document.getElementById('mainCanvas');
+    const ctx = mainCanvas.getContext('2d');
+    const cropOverlay = document.getElementById('cropOverlay');
+    const cropBox = document.getElementById('cropBox');
+
+    // UI Feedback Toast
+    function showToast(message, type = 'info') {
+      const toast = document.createElement('div');
+      const icons = {
+        info: 'ph-info text-brand-400',
+        success: 'ph-check-circle text-emerald-400',
+        warning: 'ph-warning-circle text-amber-400',
+        error: 'ph-x-circle text-rose-400'
+      };
+      
+      toast.className = `flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-900/95 border border-slate-700/80 text-slate-100 text-xs shadow-2xl backdrop-blur transition-all duration-300 transform translate-y-2 opacity-0 pointer-events-auto`;
+      toast.innerHTML = `<i class="ph-bold ${icons[type] || icons.info} text-base"></i> <span>${message}</span>`;
+      
+      const container = document.getElementById('toastContainer');
+      container.appendChild(toast);
+      
+      // Animate in
+      requestAnimationFrame(() => {
+        toast.classList.remove('translate-y-2', 'opacity-0');
+      });
+
+      // Auto dismiss
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => toast.remove(), 300);
+      }, 2500);
+    }
+
+    /**
+     * Saves snapshot to history for undo / redo
+     */
+    function pushHistoryState(actionLabel = 'Action') {
+      // Discard any redos after current index
+      if (state.historyIndex < state.history.length - 1) {
+        state.history = state.history.slice(0, state.historyIndex + 1);
+      }
+
+      // Create snapshot canvas
+      const snapshot = document.createElement('canvas');
+      snapshot.width = state.baseCanvas.width;
+      snapshot.height = state.baseCanvas.height;
+      const sCtx = snapshot.getContext('2d');
+      sCtx.drawImage(state.baseCanvas, 0, 0);
+
+      // Clone adjustments
+      const adjCopy = { ...state.adjustments };
+
+      state.history.push({
+        label: actionLabel,
+        canvas: snapshot,
+        adjustments: adjCopy
+      });
+
+      if (state.history.length > state.maxHistory) {
+        state.history.shift();
+      } else {
+        state.historyIndex++;
+      }
+
+      updateHistoryButtons();
+    }
+
+    function updateHistoryButtons() {
+      const undoBtn = document.getElementById('undoBtn');
+      const redoBtn = document.getElementById('redoBtn');
+      undoBtn.disabled = state.historyIndex <= 0;
+      redoBtn.disabled = state.historyIndex >= state.history.length - 1;
+    }
+
+    function undo() {
+      if (state.historyIndex > 0) {
+        state.historyIndex--;
+        restoreHistoryState(state.history[state.historyIndex]);
+        showToast('Undo: ' + state.history[state.historyIndex].label, 'info');
+      }
+    }
+
+    function redo() {
+      if (state.historyIndex < state.history.length - 1) {
+        state.historyIndex++;
+        restoreHistoryState(state.history[state.historyIndex]);
+        showToast('Redo: ' + state.history[state.historyIndex].label, 'info');
+      }
+    }
+
+    function restoreHistoryState(histItem) {
+      // Restore base canvas
+      state.baseCanvas.width = histItem.canvas.width;
+      state.baseCanvas.height = histItem.canvas.height;
+      const bCtx = state.baseCanvas.getContext('2d');
+      bCtx.drawImage(histItem.canvas, 0, 0);
+
+      // Restore adjustments
+      state.adjustments = { ...histItem.adjustments };
+      syncSlidersFromState();
+
+      renderCanvas();
+      updateDimensionDisplays();
+      updateHistoryButtons();
+    }
+
+    /**
+     * Renders the base canvas into mainCanvas with active color adjustments
+     */
+    function renderCanvas() {
+      if (!state.baseCanvas.width || !state.baseCanvas.height) return;
+
+      mainCanvas.width = state.baseCanvas.width;
+      mainCanvas.height = state.baseCanvas.height;
+
+      const a = state.adjustments;
+
+      // Construct CSS filter chain for fast GPU acceleration
+      // Calculate exposure: exposure translates to additional brightness
+      const effectiveBrightness = Math.max(0, (a.brightness / 100) + (a.exposure / 100)) * 100;
+      
+      const filterChain = [
+        `brightness(${effectiveBrightness}%)`,
+        `contrast(${a.contrast}%)`,
+        `saturate(${a.saturation}%)`,
+        `hue-rotate(${a.hue}deg)`,
+        `sepia(${a.sepia}%)`,
+        `grayscale(${a.grayscale}%)`,
+        `invert(${a.invert}%)`,
+        a.blur > 0 ? `blur(${a.blur}px)` : ''
+      ].filter(Boolean).join(' ');
+
+      ctx.save();
+      ctx.clearRect(0, 0, mainCanvas.width, mainCanvas.height);
+      ctx.filter = filterChain;
+      ctx.drawImage(state.baseCanvas, 0, 0);
+
+      // Temperature / Warmth overlay simulation
+      if (a.warmth !== 0) {
+        ctx.filter = 'none';
+        ctx.globalCompositeOperation = a.warmth > 0 ? 'color' : 'soft-light';
+        const warmOpacity = Math.abs(a.warmth) / 200;
+        ctx.fillStyle = a.warmth > 0 
+          ? `rgba(255, 140, 0, ${warmOpacity})` 
+          : `rgba(0, 150, 255, ${warmOpacity})`;
+        ctx.fillRect(0, 0, mainCanvas.width, mainCanvas.height);
+      }
+
+      ctx.restore();
+
+      adjustCanvasViewportDisplay();
+    }
+
+    /**
+     * Adapts canvas zoom and centering inside viewportContainer
+     */
+    function adjustCanvasViewportDisplay() {
+      if (!mainCanvas.width || !mainCanvas.height) return;
+
+      const containerWidth = viewportContainer.clientWidth - 48;
+      const containerHeight = viewportContainer.clientHeight - 48;
+
+      let scale = state.currentDisplayZoom;
+
+      if (state.zoomMode === 'fit') {
+        const scaleX = containerWidth / mainCanvas.width;
+        const scaleY = containerHeight / mainCanvas.height;
+        scale = Math.min(scaleX, scaleY, 1.0); // Don't overscale small images beyond 100% on fit
+        state.currentDisplayZoom = scale;
+      }
+
+      const displayW = Math.round(mainCanvas.width * scale);
+      const displayH = Math.round(mainCanvas.height * scale);
+
+      canvasWrapper.style.width = displayW + 'px';
+      canvasWrapper.style.height = displayH + 'px';
+      mainCanvas.style.width = displayW + 'px';
+      mainCanvas.style.height = displayH + 'px';
+
+      document.getElementById('zoomLevelText').textContent = Math.round(scale * 100) + '%';
+      
+      if (state.isCropping) {
+        updateCropBoxUI();
+      }
+    }
+
+    window.addEventListener('resize', () => {
+      if (state.zoomMode === 'fit') {
+        adjustCanvasViewportDisplay();
+      }
+    });
+
+    function syncSlidersFromState() {
+      for (const [key, value] of Object.entries(state.adjustments)) {
+        const slider = document.getElementById(`slider-${key}`);
+        const label = document.getElementById(`val-${key}`);
+        if (slider) slider.value = value;
+        if (label) {
+          if (key === 'hue') label.textContent = `${value}°`;
+          else if (key === 'blur') label.textContent = `${value} px`;
+          else if (key === 'exposure' || key === 'warmth') label.textContent = value > 0 ? `+${value}` : `${value}`;
+          else label.textContent = `${value}%`;
+        }
+      }
+    }
+
+    // Attach slider listeners
+    ['brightness', 'contrast', 'exposure', 'saturation', 'warmth', 'hue', 'sepia', 'grayscale', 'blur', 'invert'].forEach(param => {
+      const slider = document.getElementById(`slider-${param}`);
+      const valDisplay = document.getElementById(`val-${param}`);
+
+      slider.addEventListener('input', (e) => {
+        const num = parseFloat(e.target.value);
+        state.adjustments[param] = num;
+
+        if (param === 'hue') valDisplay.textContent = `${num}°`;
+        else if (param === 'blur') valDisplay.textContent = `${num} px`;
+        else if (param === 'exposure' || param === 'warmth') valDisplay.textContent = num > 0 ? `+${num}` : `${num}`;
+        else valDisplay.textContent = `${num}%`;
+
+        renderCanvas();
+      });
+
+      // Push history only on release/change
+      slider.addEventListener('change', () => {
+        pushHistoryState(`Adjust ${param}`);
+      });
+    });
+
+    // Reset section buttons
+    document.getElementById('resetToneBtn').addEventListener('click', () => {
+      state.adjustments.brightness = 100;
+      state.adjustments.contrast = 100;
+      state.adjustments.exposure = 0;
+      syncSlidersFromState();
+      renderCanvas();
+      pushHistoryState('Reset Tone');
+    });
+
+    document.getElementById('resetColorBtn').addEventListener('click', () => {
+      state.adjustments.saturation = 100;
+      state.adjustments.warmth = 0;
+      state.adjustments.hue = 0;
+      syncSlidersFromState();
+      renderCanvas();
+      pushHistoryState('Reset Color');
+    });
+
+    document.getElementById('resetStyleBtn').addEventListener('click', () => {
+      state.adjustments.sepia = 0;
+      state.adjustments.grayscale = 0;
+      state.adjustments.blur = 0;
+      state.adjustments.invert = 0;
+      syncSlidersFromState();
+      renderCanvas();
+      pushHistoryState('Reset Styling');
+    });
+
+    document.getElementById('resetAllBtn').addEventListener('click', () => {
+      state.adjustments = {
+        brightness: 100,
+        contrast: 100,
+        exposure: 0,
+        saturation: 100,
+        warmth: 0,
+        hue: 0,
+        sepia: 0,
+        grayscale: 0,
+        blur: 0,
+        invert: 0
+      };
+      syncSlidersFromState();
+      renderCanvas();
+      pushHistoryState('Reset All Adjustments');
+      showToast('All adjustments reset', 'info');
+    });
+
+    // Crop System
+    function initCropBox() {
+      // Default to 80% centered box
+      const w = mainCanvas.width * 0.8;
+      let h = mainCanvas.height * 0.8;
+
+      if (state.cropRatio !== 'free') {
+        const [rw, rh] = state.cropRatio.split(':').map(Number);
+        h = w * (rh / rw);
+        if (h > mainCanvas.height * 0.9) {
+          h = mainCanvas.height * 0.8;
+          // Recalculate width
+          const wNew = h * (rw / rh);
+          state.cropBoxRect = {
+            x: (mainCanvas.width - wNew) / 2,
+            y: (mainCanvas.height - h) / 2,
+            width: wNew,
+            height: h
+          };
+          updateCropBoxUI();
+          return;
+        }
+      }
+
+      state.cropBoxRect = {
+        x: (mainCanvas.width - w) / 2,
+        y: (mainCanvas.height - h) / 2,
+        width: w,
+        height: h
+      };
+
+      updateCropBoxUI();
+    }
+
+    function updateCropBoxUI() {
+      if (!state.isCropping) return;
+      const scale = state.currentDisplayZoom;
+      cropBox.style.left = (state.cropBoxRect.x * scale) + 'px';
+      cropBox.style.top = (state.cropBoxRect.y * scale) + 'px';
+      cropBox.style.width = (state.cropBoxRect.width * scale) + 'px';
+      cropBox.style.height = (state.cropBoxRect.height * scale) + 'px';
+    }
+
+    function startCropping() {
+      state.isCropping = true;
+      cropOverlay.classList.remove('hidden');
+      document.getElementById('activateCropBtn').classList.add('hidden');
+      document.getElementById('cancelCropBtn').classList.remove('hidden');
+      document.getElementById('applyCropBtn').disabled = false;
+      initCropBox();
+      showToast('Crop mode active: Drag box or corner handles', 'info');
+    }
+
+    function stopCropping() {
+      state.isCropping = false;
+      cropOverlay.classList.add('hidden');
+      document.getElementById('activateCropBtn').classList.remove('hidden');
+      document.getElementById('cancelCropBtn').classList.add('hidden');
+      document.getElementById('applyCropBtn').disabled = true;
+    }
+
+    function applyCrop() {
+      if (!state.isCropping) return;
+
+      const { x, y, width, height } = state.cropBoxRect;
+      if (width < 5 || height < 5) {
+        showToast('Crop region is too small', 'warning');
+        return;
+      }
+
+      // Bake current edits into the cropped area
+      const croppedCanvas = document.createElement('canvas');
+      croppedCanvas.width = Math.round(width);
+      croppedCanvas.height = Math.round(height);
+      const cCtx = croppedCanvas.getContext('2d');
+
+      // Draw from mainCanvas which already has filters applied
+      cCtx.drawImage(
+        mainCanvas,
+        Math.round(x), Math.round(y), Math.round(width), Math.round(height),
+        0, 0, croppedCanvas.width, croppedCanvas.height
+      );
+
+      // Now set this as base canvas and reset adjustments so they don't apply twice
+      state.baseCanvas.width = croppedCanvas.width;
+      state.baseCanvas.height = croppedCanvas.height;
+      const bCtx = state.baseCanvas.getContext('2d');
+      bCtx.drawImage(croppedCanvas, 0, 0);
+
+      // Reset adjustment sliders because they have been baked into cropped canvas
+      state.adjustments = {
+        brightness: 100, contrast: 100, exposure: 0,
+        saturation: 100, warmth: 0, hue: 0,
+        sepia: 0, grayscale: 0, blur: 0, invert: 0
+      };
+      syncSlidersFromState();
+
+      stopCropping();
+      pushHistoryState('Crop Image');
+      renderCanvas();
+      updateDimensionDisplays();
+      showToast('Image cropped successfully!', 'success');
+    }
+
+    document.getElementById('activateCropBtn').addEventListener('click', startCropping);
+    document.getElementById('cancelCropBtn').addEventListener('click', stopCropping);
+    document.getElementById('applyCropBtn').addEventListener('click', applyCrop);
+
+    // Crop Aspect Ratio Presets
+    document.querySelectorAll('.crop-ratio-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.crop-ratio-btn').forEach(b => {
+          b.classList.remove('border-brand-500/80', 'text-white');
+          b.classList.add('border-slate-700', 'text-slate-200');
+        });
+        btn.classList.add('border-brand-500/80', 'text-white');
+        btn.classList.remove('border-slate-700');
+
+        state.cropRatio = btn.dataset.ratio;
+        if (!state.isCropping) {
+          startCropping();
+        } else {
+          initCropBox();
+        }
+      });
+    });
+
+    // Crop box interactive drag & handle resizing
+    function onPointerDown(e) {
+      if (!state.isCropping) return;
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+      if (e.target.dataset.handle) {
+        // Resizing via handle
+        state.activeCropHandle = e.target.dataset.handle;
+        state.isDraggingCrop = false;
+      } else if (e.target === cropBox || cropBox.contains(e.target)) {
+        // Moving the entire box
+        state.isDraggingCrop = true;
+        state.activeCropHandle = null;
+      } else {
+        return;
+      }
+
+      state.dragStart = {
+        x: clientX,
+        y: clientY,
+        cropX: state.cropBoxRect.x,
+        cropY: state.cropBoxRect.y,
+        cropW: state.cropBoxRect.width,
+        cropH: state.cropBoxRect.height
+      };
+
+      window.addEventListener('pointermove', onPointerMove);
+      window.addEventListener('pointerup', onPointerUp);
+      e.preventDefault();
+    }
+
+    function onPointerMove(e) {
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      const scale = state.currentDisplayZoom;
+
+      const dx = (clientX - state.dragStart.x) / scale;
+      const dy = (clientY - state.dragStart.y) / scale;
+
+      const imgW = mainCanvas.width;
+      const imgH = mainCanvas.height;
+
+      if (state.isDraggingCrop) {
+        // Moving box
+        let newX = state.dragStart.cropX + dx;
+        let newY = state.dragStart.cropY + dy;
+
+        // Boundary constrain
+        newX = Math.max(0, Math.min(newX, imgW - state.cropBoxRect.width));
+        newY = Math.max(0, Math.min(newY, imgH - state.cropBoxRect.height));
+
+        state.cropBoxRect.x = newX;
+        state.cropBoxRect.y = newY;
+      } else if (state.activeCropHandle) {
+        // Resizing via handle
+        let { cropX, cropY, cropW, cropH } = state.dragStart;
+        const handle = state.activeCropHandle;
+
+        let newX = cropX;
+        let newY = cropY;
+        let newW = cropW;
+        let newH = cropH;
+
+        if (handle.includes('r')) newW = Math.max(30, Math.min(cropW + dx, imgW - cropX));
+        if (handle.includes('l')) {
+          const maxLeftShift = cropX;
+          const shift = Math.min(maxLeftShift, Math.max(-cropW + 30, -dx));
+          newX = cropX - shift;
+          newW = cropW + shift;
+        }
+        if (handle.includes('b')) newH = Math.max(30, Math.min(cropH + dy, imgH - cropY));
+        if (handle.includes('t')) {
+          const maxTopShift = cropY;
+          const shift = Math.min(maxTopShift, Math.max(-cropH + 30, -dy));
+          newY = cropY - shift;
+          newH = cropH + shift;
+        }
+
+        // Apply ratio constraint if locked
+        if (state.cropRatio !== 'free') {
+          const [rw, rh] = state.cropRatio.split(':').map(Number);
+          const ratio = rw / rh;
+
+          if (handle === 'tl' || handle === 'tr' || handle === 'bl' || handle === 'br' || handle.includes('r') || handle.includes('l')) {
+            newH = newW / ratio;
+          } else {
+            newW = newH * ratio;
+          }
+
+          // Boundary clamp after ratio
+          if (newX + newW > imgW) newW = imgW - newX;
+          if (newY + newH > imgH) newH = imgH - newY;
+        }
+
+        state.cropBoxRect = { x: newX, y: newY, width: newW, height: newH };
+      }
+
+      updateCropBoxUI();
+    }
+
+    function onPointerUp() {
+      state.isDraggingCrop = false;
+      state.activeCropHandle = null;
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('pointerup', onPointerUp);
+    }
+
+    cropOverlay.addEventListener('pointerdown', onPointerDown);
+
+    // Rotate Clockwise (+90deg)
+    document.getElementById('rotateCWBtn').addEventListener('click', () => {
+      rotateCanvas(90);
+    });
+
+    // Rotate Counter-Clockwise (-90deg)
+    document.getElementById('rotateCCWBtn').addEventListener('click', () => {
+      rotateCanvas(-90);
+    });
+
+    function rotateCanvas(degrees) {
+      const orig = state.baseCanvas;
+      const next = document.createElement('canvas');
+
+      if (Math.abs(degrees) === 90 || Math.abs(degrees) === 270) {
+        next.width = orig.height;
+        next.height = orig.width;
+      } else {
+        next.width = orig.width;
+        next.height = orig.height;
+      }
+
+      const nCtx = next.getContext('2d');
+      nCtx.translate(next.width / 2, next.height / 2);
+      nCtx.rotate((degrees * Math.PI) / 180);
+      nCtx.drawImage(orig, -orig.width / 2, -orig.height / 2);
+
+      state.baseCanvas.width = next.width;
+      state.baseCanvas.height = next.height;
+      const bCtx = state.baseCanvas.getContext('2d');
+      bCtx.drawImage(next, 0, 0);
+
+      pushHistoryState(`Rotate ${degrees}°`);
+      renderCanvas();
+      updateDimensionDisplays();
+      showToast(`Rotated ${degrees > 0 ? '+90°' : '-90°'}`, 'info');
+    }
+
+    // Flip Horizontal
+    document.getElementById('flipHBtn').addEventListener('click', () => {
+      flipCanvas(true, false);
+    });
+
+    // Flip Vertical
+    document.getElementById('flipVBtn').addEventListener('click', () => {
+      flipCanvas(false, true);
+    });
+
+    function flipCanvas(horizontal, vertical) {
+      const orig = state.baseCanvas;
+      const next = document.createElement('canvas');
+      next.width = orig.width;
+      next.height = orig.height;
+      const nCtx = next.getContext('2d');
+
+      nCtx.translate(horizontal ? next.width : 0, vertical ? next.height : 0);
+      nCtx.scale(horizontal ? -1 : 1, vertical ? -1 : 1);
+      nCtx.drawImage(orig, 0, 0);
+
+      const bCtx = state.baseCanvas.getContext('2d');
+      bCtx.clearRect(0, 0, orig.width, orig.height);
+      bCtx.drawImage(next, 0, 0);
+
+      pushHistoryState(horizontal ? 'Flip Horizontal' : 'Flip Vertical');
+      renderCanvas();
+      showToast(horizontal ? 'Flipped Horizontally' : 'Flipped Vertically', 'info');
+    }
+
+    const widthInput = document.getElementById('scaleWidthInput');
+    const heightInput = document.getElementById('scaleHeightInput');
+    const keepAspectCheckbox = document.getElementById('keepAspectCheckbox');
+
+    function updateDimensionDisplays() {
+      const w = state.baseCanvas.width;
+      const h = state.baseCanvas.height;
+      const str = `${w} × ${h} px`;
+
+      document.getElementById('imageDimensionsBadge').textContent = str;
+      document.getElementById('currentDimText').textContent = str;
+      document.getElementById('exportDimText').textContent = str;
+
+      widthInput.value = w;
+      heightInput.value = h;
+    }
+
+    widthInput.addEventListener('input', () => {
+      if (keepAspectCheckbox.checked && state.baseCanvas.width > 0) {
+        const ratio = state.baseCanvas.height / state.baseCanvas.width;
+        heightInput.value = Math.max(1, Math.round(widthInput.value * ratio));
+      }
+    });
+
+    heightInput.addEventListener('input', () => {
+      if (keepAspectCheckbox.checked && state.baseCanvas.height > 0) {
+        const ratio = state.baseCanvas.width / state.baseCanvas.height;
+        widthInput.value = Math.max(1, Math.round(heightInput.value * ratio));
+      }
+    });
+
+    // Preset scale multiplier buttons
+    document.querySelectorAll('.quick-scale-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const factor = parseFloat(btn.dataset.scale);
+        widthInput.value = Math.round(state.baseCanvas.width * factor);
+        heightInput.value = Math.round(state.baseCanvas.height * factor);
+      });
+    });
+
+    // Apply Dimensions Resize
+    document.getElementById('applyResizeBtn').addEventListener('click', () => {
+      const targetW = parseInt(widthInput.value, 10);
+      const targetH = parseInt(heightInput.value, 10);
+
+      if (isNaN(targetW) || isNaN(targetH) || targetW < 10 || targetH < 10) {
+        showToast('Please enter valid dimensions (minimum 10px)', 'warning');
+        return;
+      }
+
+      if (targetW > 8000 || targetH > 8000) {
+        showToast('Maximum dimension is 8,000 px', 'warning');
+        return;
+      }
+
+      // Step-down / step-up interpolation
+      const scaledCanvas = document.createElement('canvas');
+      scaledCanvas.width = targetW;
+      scaledCanvas.height = targetH;
+      const sCtx = scaledCanvas.getContext('2d');
+      sCtx.imageSmoothingEnabled = true;
+      sCtx.imageSmoothingQuality = 'high';
+      sCtx.drawImage(state.baseCanvas, 0, 0, targetW, targetH);
+
+      state.baseCanvas.width = targetW;
+      state.baseCanvas.height = targetH;
+      const bCtx = state.baseCanvas.getContext('2d');
+      bCtx.drawImage(scaledCanvas, 0, 0);
+
+      pushHistoryState(`Scale to ${targetW}×${targetH}`);
+      renderCanvas();
+      updateDimensionDisplays();
+      showToast(`Resized to ${targetW} × ${targetH} px`, 'success');
+    });
+
+    const filterPresets = {
+      normal: { brightness: 100, contrast: 100, exposure: 0, saturation: 100, warmth: 0, hue: 0, sepia: 0, grayscale: 0, blur: 0, invert: 0 },
+      vivid: { brightness: 105, contrast: 118, exposure: 5, saturation: 145, warmth: 10, hue: 0, sepia: 0, grayscale: 0, blur: 0, invert: 0 },
+      'warm-glow': { brightness: 105, contrast: 105, exposure: 0, saturation: 115, warmth: 45, hue: -5, sepia: 15, grayscale: 0, blur: 0, invert: 0 },
+      'cool-dusk': { brightness: 98, contrast: 112, exposure: -5, saturation: 95, warmth: -40, hue: 15, sepia: 0, grayscale: 0, blur: 0, invert: 0 },
+      vintage: { brightness: 95, contrast: 90, exposure: -5, saturation: 85, warmth: 30, hue: -10, sepia: 40, grayscale: 0, blur: 0, invert: 0 },
+      noir: { brightness: 108, contrast: 155, exposure: 0, saturation: 0, warmth: 0, hue: 0, sepia: 0, grayscale: 100, blur: 0, invert: 0 },
+      cyber: { brightness: 110, contrast: 135, exposure: 10, saturation: 180, warmth: -25, hue: 45, sepia: 0, grayscale: 0, blur: 0, invert: 0 },
+      faded: { brightness: 112, contrast: 82, exposure: 5, saturation: 85, warmth: 10, hue: 0, sepia: 10, grayscale: 0, blur: 0, invert: 0 },
+    };
+
+    document.querySelectorAll('.filter-preset-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const filterKey = btn.dataset.filter;
+        const config = filterPresets[filterKey];
+        if (config) {
+          state.adjustments = { ...config };
+          syncSlidersFromState();
+          renderCanvas();
+          pushHistoryState(`Preset: ${filterKey}`);
+          showToast(`Preset "${btn.querySelector('span').textContent}" applied`, 'info');
+        }
+      });
+    });
+
+    // Sidebar Tab Switching
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const targetTab = btn.dataset.tab;
+
+        document.querySelectorAll('.tab-btn').forEach(b => {
+          b.classList.remove('border-brand-500', 'text-white', 'bg-surface-900');
+          b.classList.add('border-transparent', 'text-slate-400');
+        });
+        btn.classList.add('border-brand-500', 'text-white', 'bg-surface-900');
+        btn.classList.remove('border-transparent', 'text-slate-400');
+
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+        document.getElementById(`panel-${targetTab}`).classList.remove('hidden');
+
+        // Cancel cropping if user left crop tab
+        if (targetTab !== 'crop' && state.isCropping) {
+          stopCropping();
+        }
+      });
+    });
+
+    // Zoom buttons
+    document.getElementById('zoomInBtn').addEventListener('click', () => {
+      state.zoomMode = 'manual';
+      state.currentDisplayZoom = Math.min(3.0, state.currentDisplayZoom + 0.15);
+      adjustCanvasViewportDisplay();
+    });
+
+    document.getElementById('zoomOutBtn').addEventListener('click', () => {
+      state.zoomMode = 'manual';
+      state.currentDisplayZoom = Math.max(0.1, state.currentDisplayZoom - 0.15);
+      adjustCanvasViewportDisplay();
+    });
+
+    document.getElementById('zoomFitBtn').addEventListener('click', () => {
+      state.zoomMode = 'fit';
+      adjustCanvasViewportDisplay();
+    });
+
+    // Compare original button (press & hold)
+    const compareBtn = document.getElementById('compareBtn');
+    let isComparing = false;
+
+    const startCompare = () => {
+      if (isComparing || !state.history.length) return;
+      isComparing = true;
+      const firstState = state.history[0];
+      // Show pristine original base
+      ctx.save();
+      ctx.clearRect(0, 0, mainCanvas.width, mainCanvas.height);
+      ctx.filter = 'none';
+      ctx.drawImage(firstState.canvas, 0, 0, mainCanvas.width, mainCanvas.height);
+      ctx.restore();
+    };
+
+    const stopCompare = () => {
+      if (!isComparing) return;
+      isComparing = false;
+      renderCanvas();
+    };
+
+    compareBtn.addEventListener('mousedown', startCompare);
+    window.addEventListener('mouseup', stopCompare);
+    compareBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startCompare(); });
+    window.addEventListener('touchend', stopCompare);
+
+    // Keyboard shortcuts
+    window.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+        e.preventDefault();
+        undo();
+      } else if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.shiftKey && e.key === 'Z'))) {
+        e.preventDefault();
+        redo();
+      }
+    });
+
+    document.getElementById('undoBtn').addEventListener('click', undo);
+    document.getElementById('redoBtn').addEventListener('click', redo);
+
+    // Image Loader Function
+    function loadNewImage(imgSource) {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        state.baseCanvas.width = img.naturalWidth || img.width;
+        state.baseCanvas.height = img.naturalHeight || img.height;
+        const bCtx = state.baseCanvas.getContext('2d');
+        bCtx.drawImage(img, 0, 0);
+
+        // Reset adjustments
+        state.adjustments = {
+          brightness: 100, contrast: 100, exposure: 0,
+          saturation: 100, warmth: 0, hue: 0,
+          sepia: 0, grayscale: 0, blur: 0, invert: 0
+        };
+        syncSlidersFromState();
+
+        // Clear history stack
+        state.history = [];
+        state.historyIndex = -1;
+        pushHistoryState('Original Photo');
+
+        state.zoomMode = 'fit';
+        renderCanvas();
+        updateDimensionDisplays();
+        showToast('Photo loaded successfully', 'success');
+      };
+
+      img.onerror = () => {
+        showToast('Failed to load image. Please try another file.', 'error');
+      };
+
+      img.src = imgSource;
+    }
+
+    // File Input Upload
+    const uploadInput = document.getElementById('imageUploadInput');
+    uploadInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (event) => loadNewImage(event.target.result);
+        reader.readAsDataURL(file);
+      }
+      uploadInput.value = '';
+    });
+
+    // Drag and Drop
+    viewportContainer.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      viewportContainer.classList.add('ring-2', 'ring-brand-500');
+    });
+
+    viewportContainer.addEventListener('dragleave', () => {
+      viewportContainer.classList.remove('ring-2', 'ring-brand-500');
+    });
+
+    viewportContainer.addEventListener('drop', (e) => {
+      e.preventDefault();
+      viewportContainer.classList.remove('ring-2', 'ring-brand-500');
+      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+        const file = e.dataTransfer.files[0];
+        if (file.type.startsWith('image/')) {
+          const reader = new FileReader();
+          reader.onload = (event) => loadNewImage(event.target.result);
+          reader.readAsDataURL(file);
+        } else {
+          showToast('Please drop a valid image file', 'warning');
+        }
+      }
+    });
+
+    // Create a beautiful procedural artistic sample landscape so app works instantly offline
+    function generateScenicDemoArtwork() {
+      const demoCanvas = document.createElement('canvas');
+      demoCanvas.width = 1600;
+      demoCanvas.height = 1000;
+      const gCtx = demoCanvas.getContext('2d');
+
+      // Sky gradient (Sunset at mountain range)
+      const skyGradient = gCtx.createLinearGradient(0, 0, 0, 700);
+      skyGradient.addColorStop(0, '#0c1033');
+      skyGradient.addColorStop(0.3, '#311b58');
+      skyGradient.addColorStop(0.65, '#a83256');
+      skyGradient.addColorStop(0.85, '#e0653d');
+      skyGradient.addColorStop(1, '#ffc46b');
+      gCtx.fillStyle = skyGradient;
+      gCtx.fillRect(0, 0, 1600, 1000);
+
+      // Sun
+      gCtx.beginPath();
+      gCtx.arc(800, 680, 110, 0, Math.PI * 2);
+      const sunGlow = gCtx.createRadialGradient(800, 680, 30, 800, 680, 110);
+      sunGlow.addColorStop(0, '#ffffff');
+      sunGlow.addColorStop(0.4, '#fff3a1');
+      sunGlow.addColorStop(1, 'rgba(255, 140, 40, 0)');
+      gCtx.fillStyle = sunGlow;
+      gCtx.fill();
+
+      // Mountain layer 1 (Far background)
+      gCtx.beginPath();
+      gCtx.moveTo(0, 720);
+      const farPeaks = [0, 640, 240, 520, 480, 660, 720, 500, 960, 610, 1200, 480, 1420, 620, 1600, 580];
+      for (let i = 0; i < farPeaks.length; i += 2) {
+        gCtx.lineTo(farPeaks[i], farPeaks[i+1]);
+      }
+      gCtx.lineTo(1600, 1000);
+      gCtx.lineTo(0, 1000);
+      gCtx.closePath();
+      gCtx.fillStyle = '#4a2550';
+      gCtx.fill();
+
+      // Mountain layer 2 (Mid-ground)
+      gCtx.beginPath();
+      gCtx.moveTo(0, 760);
+      const midPeaks = [0, 740, 350, 610, 600, 780, 880, 650, 1120, 760, 1380, 620, 1600, 740];
+      for (let i = 0; i < midPeaks.length; i += 2) {
+        gCtx.lineTo(midPeaks[i], midPeaks[i+1]);
+      }
+      gCtx.lineTo(1600, 1000);
+      gCtx.lineTo(0, 1000);
+      gCtx.closePath();
+      gCtx.fillStyle = '#2d1838';
+      gCtx.fill();
+
+      // Foreground Hills & Lake reflection
+      const lakeGradient = gCtx.createLinearGradient(0, 780, 0, 1000);
+      lakeGradient.addColorStop(0, '#1c1328');
+      lakeGradient.addColorStop(1, '#0b0914');
+      gCtx.fillStyle = lakeGradient;
+      gCtx.fillRect(0, 780, 1600, 220);
+
+      // Water shimmering highlight reflection
+      gCtx.fillStyle = 'rgba(255, 180, 100, 0.22)';
+      for (let y = 800; y < 980; y += 10) {
+        const spread = (y - 780) * 2.8;
+        const lineW = Math.random() * spread + 40;
+        gCtx.fillRect(800 - lineW / 2, y, lineW, 2.5);
+      }
+
+      // Foreground silhouettes of pine trees
+      function drawPine(x, y, h, w) {
+        gCtx.fillStyle = '#08050e';
+        gCtx.beginPath();
+        gCtx.moveTo(x, y - h);
+        gCtx.lineTo(x + w, y);
+        gCtx.lineTo(x - w, y);
+        gCtx.closePath();
+        gCtx.fill();
+        gCtx.fillRect(x - 2, y, 4, 12);
+      }
+
+      for (let x = 40; x < 500; x += 35 + Math.random() * 20) {
+        drawPine(x, 830 + Math.random() * 20, 90 + Math.random() * 40, 25);
+      }
+      for (let x = 1150; x < 1580; x += 35 + Math.random() * 20) {
+        drawPine(x, 820 + Math.random() * 30, 100 + Math.random() * 50, 30);
+      }
+
+      return demoCanvas.toDataURL('image/png');
+    }
+
+    // Sample button loads demo landscape
+    document.getElementById('sampleImageBtn').addEventListener('click', () => {
+      loadNewImage(generateScenicDemoArtwork());
+      showToast('Scenic mountain sample loaded', 'info');
+    });
+
+    const exportModal = document.getElementById('exportModal');
+    const exportModalOpenBtn = document.getElementById('exportModalOpenBtn');
+    const closeExportModalBtn = document.getElementById('closeExportModalBtn');
+    const cancelExportModalBtn = document.getElementById('cancelExportModalBtn');
+    const exportQualitySlider = document.getElementById('exportQualitySlider');
+    const exportQualityVal = document.getElementById('exportQualityVal');
+    const qualityContainer = document.getElementById('qualitySliderContainer');
+    const confirmDownloadBtn = document.getElementById('confirmDownloadBtn');
+    const exportFileNameInput = document.getElementById('exportFileNameInput');
+    const exportExtLabel = document.getElementById('exportExtLabel');
+    const pickFolderBtn = document.getElementById('pickFolderBtn');
+    const clearFolderBtn = document.getElementById('clearFolderBtn');
+    const chosenFolderName = document.getElementById('chosenFolderName');
+    const chosenFolderSubtext = document.getElementById('chosenFolderSubtext');
+    const folderSupportBadge = document.getElementById('folderSupportBadge');
+    const confirmDownloadLabel = document.getElementById('confirmDownloadLabel');
+    const confirmDownloadIcon = document.getElementById('confirmDownloadIcon');
+
+    // Check File System Access API support
+    const supportsDirectoryPicker = typeof window.showDirectoryPicker === 'function';
+    const supportsSaveFilePicker = typeof window.showSaveFilePicker === 'function';
+
+    if (!supportsDirectoryPicker && !supportsSaveFilePicker) {
+      folderSupportBadge.innerHTML = `<i class="ph ph-info"></i> OS Save Dialog will be used`;
+      folderSupportBadge.className = 'text-[10px] text-slate-400 flex items-center gap-1 font-medium';
+    }
+
+    exportModalOpenBtn.addEventListener('click', () => {
+      exportModal.classList.remove('hidden');
+    });
+
+    const closeExport = () => exportModal.classList.add('hidden');
+    closeExportModalBtn.addEventListener('click', closeExport);
+    cancelExportModalBtn.addEventListener('click', closeExport);
+
+    // Update folder UI display
+    function updateFolderDisplay() {
+      if (state.chosenDirectoryHandle) {
+        chosenFolderName.textContent = `Folder: ${state.chosenDirectoryHandle.name}`;
+        chosenFolderSubtext.textContent = 'Will save directly into this directory';
+        clearFolderBtn.classList.remove('hidden');
+        confirmDownloadLabel.textContent = `Save to ${state.chosenDirectoryHandle.name}`;
+        confirmDownloadIcon.className = 'ph-bold ph-floppy-disk';
+      } else {
+        chosenFolderName.textContent = 'Default Downloads Folder';
+        chosenFolderSubtext.textContent = 'Standard browser save location';
+        clearFolderBtn.classList.add('hidden');
+        confirmDownloadLabel.textContent = 'Download Image';
+        confirmDownloadIcon.className = 'ph-bold ph-download-simple';
+      }
+    }
+
+    // Pick target folder using File System Access API
+    pickFolderBtn.addEventListener('click', async () => {
+      if (supportsDirectoryPicker) {
+        try {
+          const dirHandle = await window.showDirectoryPicker({
+            mode: 'readwrite'
+          });
+          state.chosenDirectoryHandle = dirHandle;
+          updateFolderDisplay();
+          showToast(`Destination set to "${dirHandle.name}"`, 'success');
+        } catch (err) {
+          if (err.name !== 'AbortError') {
+            showToast('Unable to open directory. Standard save will be used.', 'warning');
+          }
+        }
+      } else if (supportsSaveFilePicker) {
+        showToast('Click "Save Photo" to pick destination folder in OS dialog.', 'info');
+      } else {
+        showToast('Your browser saves to the Downloads directory.', 'info');
+      }
+    });
+
+    clearFolderBtn.addEventListener('click', () => {
+      state.chosenDirectoryHandle = null;
+      updateFolderDisplay();
+      showToast('Reset to default browser downloads', 'info');
+    });
+
+    // Format selection
+    document.querySelectorAll('.format-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.format-btn').forEach(b => {
+          b.classList.remove('bg-brand-600', 'border-brand-500', 'text-white');
+          b.classList.add('bg-surface-800', 'border-slate-700', 'text-slate-300');
+        });
+        btn.classList.add('bg-brand-600', 'border-brand-500', 'text-white');
+        btn.classList.remove('bg-surface-800', 'border-slate-700', 'text-slate-300');
+
+        state.exportFormat = btn.dataset.format;
+        const isLossy = state.exportFormat === 'image/jpeg' || state.exportFormat === 'image/webp';
+        qualityContainer.classList.toggle('hidden', !isLossy);
+
+        const formatName = state.exportFormat.split('/')[1].toUpperCase();
+        document.getElementById('exportMimeText').textContent = formatName;
+
+        const ext = state.exportFormat === 'image/jpeg' ? '.jpg' : `.${state.exportFormat.split('/')[1]}`;
+        exportExtLabel.textContent = ext;
+      });
+    });
+
+    exportQualitySlider.addEventListener('input', (e) => {
+      const q = parseInt(e.target.value, 10);
+      state.exportQuality = q / 100;
+      exportQualityVal.textContent = `${q}%`;
+    });
+
+    // Helper to get export Blob from canvas
+    async function getExportBlob() {
+      return new Promise((resolve) => {
+        renderCanvas();
+        if (state.exportFormat === 'image/jpeg') {
+          // Flatten canvas with white/opaque background for JPEGs
+          const flatCanvas = document.createElement('canvas');
+          flatCanvas.width = mainCanvas.width;
+          flatCanvas.height = mainCanvas.height;
+          const fCtx = flatCanvas.getContext('2d');
+          fCtx.fillStyle = '#ffffff';
+          fCtx.fillRect(0, 0, flatCanvas.width, flatCanvas.height);
+          fCtx.drawImage(mainCanvas, 0, 0);
+          flatCanvas.toBlob((blob) => resolve(blob), 'image/jpeg', state.exportQuality);
+        } else {
+          mainCanvas.toBlob((blob) => resolve(blob), state.exportFormat, state.exportQuality);
+        }
+      });
+    }
+
+    // Execute Download / Save to chosen folder
+    confirmDownloadBtn.addEventListener('click', async () => {
+      try {
+        const rawName = exportFileNameInput.value.trim() || 'bmw-lumina-quick-edit';
+        const cleanName = rawName.replace(/[^a-zA-Z0-9_\-\.]/g, '_');
+        const ext = state.exportFormat === 'image/jpeg' ? 'jpg' : state.exportFormat.split('/')[1];
+        const fileNameWithExt = cleanName.endsWith(`.${ext}`) ? cleanName : `${cleanName}.${ext}`;
+
+        const blob = await getExportBlob();
+        if (!blob) {
+          showToast('Failed to generate image file.', 'error');
+          return;
+        }
+
+        // 1. If user previously chose a specific directory
+        if (state.chosenDirectoryHandle) {
+          try {
+            const fileHandle = await state.chosenDirectoryHandle.getFileHandle(fileNameWithExt, { create: true });
+            const writable = await fileHandle.createWritable();
+            await writable.write(blob);
+            await writable.close();
+            closeExport();
+            showToast(`Saved "${fileNameWithExt}" to folder "${state.chosenDirectoryHandle.name}"!`, 'success');
+            return;
+          } catch (writeErr) {
+            console.warn('Direct directory write failed, falling back to save picker/download:', writeErr);
+            showToast('Permission expired or denied. Falling back...', 'warning');
+          }
+        }
+
+        // 2. Fallback to standard browser download
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.download = fileNameWithExt;
+        link.href = url;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+        closeExport();
+        showToast(`Downloaded "${fileNameWithExt}" successfully!`, 'success');
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          showToast('Export failed. Check permissions.', 'error');
+        }
+      }
+    });
+
+    // Initialize application on load
+    window.addEventListener('load', () => {
+      loadNewImage(generateScenicDemoArtwork());
+    });
+  </script>
+</body>
+</html>
